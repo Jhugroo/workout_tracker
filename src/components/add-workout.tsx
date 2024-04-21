@@ -1,7 +1,6 @@
 import { api } from "@/utils/api";
-import { Input } from "@nextui-org/react";
 import { type ChangeEvent, useState } from 'react';
-import { Button } from "@nextui-org/react";
+import { Button, Card, CardBody, Divider, Input } from "@nextui-org/react";
 import AddSets, { type sets } from "./add-sets";
 export type workout = {
   order: number,
@@ -42,21 +41,28 @@ export default function AddWorkout() {
   return (
     <>
       {inputs.map((input, i) => (
-        <div key={i}>
-          <Input
-            type="number"
-            name='order'
-            value={input.order}
-            onChange={event => handleInputChange(i, event)}
-            placeholder='order'
-          />
-          <AddSets iteration={i} inputs={inputs} setInputs={setInputs} />
-          {inputs.length !== 1 && (
-            <Button color="danger" onClick={() => handleRemoveClick(i)}>Remove Workout</Button>
-          )}
-
-        </div>
-      ))}
+        <div className="md:flex-nowrap gap-4" key={i}>
+          <Card>
+            <CardBody>
+              <Input
+                label="Day"
+                type="number"
+                name='order'
+                value={input.order}
+                onChange={event => handleInputChange(i, event)}
+              />
+              <Divider className="my-4" />
+              <AddSets iteration={i} inputs={inputs} setInputs={setInputs} />
+              {
+                inputs.length !== 1 && (
+                  <Button color="danger" onClick={() => handleRemoveClick(i)}>Remove Workout</Button>
+                )
+              }
+            </CardBody>
+          </Card>
+        </div >
+      ))
+      }
       <Button color="secondary" onClick={handleAddClick}>Add Workout</Button>
       <Button color="success" onClick={handleSubmit}>Save Workout</Button>
     </>

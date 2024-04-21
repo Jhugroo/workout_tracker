@@ -37,13 +37,15 @@ export default function AddSets({ iteration, inputs, setInputs }: { iteration: n
       {inputs ? inputs[iteration].sets.map((input, i) => (
         <div className="flex w-full flex-wrap md:flex-nowrap gap-4" key={i}>
           <Input
+            label="Name"
             name='name'
             onChange={event => handleInputChange(i, event)}
-            placeholder='Name'
+
           />
           <Input
+            label="Sets & reps"
             name='reps' onChange={event => handleInputChange(i, event)}
-            placeholder='Reps'
+
           />
           <Button color="danger" onClick={() => handleRemoveSet(i)}>Remove set</Button>
         </div>
