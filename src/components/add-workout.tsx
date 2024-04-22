@@ -1,70 +1,94 @@
 import { api } from "@/utils/api";
-import { type ChangeEvent, useState } from 'react';
-import { Button, Card, CardBody, Divider, Input } from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
+import { useState } from 'react';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button as ModalButton, useDisclosure } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import AddSets, { type sets } from "./add-sets";
 export type workout = {
+  id?: number,
+  weekId?: number,
   order: number,
   sets: sets
 }[];
-export default function AddWorkout() {
-  const [inputs, setInputs] = useState<workout>([{ order: 1, sets: [{ name: '', reps: '' }] }]);
-
-  const workout = api.workout.createWorkout.useMutation({
-    onSuccess: (newSets) => {
-      console.log(newSets)
+type selectedWorkout = {
+  id: number;
+  order: number;
+  weekId: number | null;
+}
+export default function AddWorkout({ weekId }: { weekId: number }) {
+  const { data: workouts, refetch, isLoading } = api.workout.getWorkouts.useQuery({ weekId: weekId });
+  const [selectedWorkout, setSelectedWorkout] = useState<selectedWorkout>();
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const addWorkouts = api.workout.addWorkout.useMutation({
+    onSuccess: (workout) => {
+      void refetch();
+      console.log(workout)
     }
   });
-
-  const handleInputChange = (index: number, event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    const list = [...inputs];
-    if (list) {
-      list[index][name] = value;
+  const removeWorkout = api.workout.deleteWorkout.useMutation({
+    onSuccess: (workout) => {
+      void refetch();
     }
-    setInputs(list);
+  });
+  const addWorkout = () => {
+    if (!isLoading && workouts?.length) {
+      addWorkouts.mutate({
+        order: workouts.length + 1,
+        weekId: weekId
+      });
+    } else {
+      addWorkouts.mutate({
+        order: null,
+        weekId: weekId
+      });
+    }
   };
-
-  const handleAddClick = () => {
-    setInputs([...inputs, { order: inputs.length + 1, sets: [{ name: '', reps: '' }] }]);
-  };
-
-  const handleRemoveClick = (index: number) => {
-    const list = [...inputs];
-    list.splice(index, 1);
-    setInputs(list);
-  };
-
-  const handleSubmit = () => {
-    console.log('Form submitted:', inputs);
-    workout.mutate(inputs);
+  const deleteWorkout = (id: number) => {
+    removeWorkout.mutate({ id: id })
   };
   return (
     <>
-      {inputs.map((input, i) => (
-        <div className="md:flex-nowrap gap-4" key={i}>
-          <Card>
-            <CardBody>
-              <Input
-                label="Day"
-                type="number"
-                name='order'
-                value={input.order}
-                onChange={event => handleInputChange(i, event)}
-              />
-              <Divider className="my-4" />
-              <AddSets iteration={i} inputs={inputs} setInputs={setInputs} />
-              {
-                inputs.length !== 1 && (
-                  <Button color="danger" onClick={() => handleRemoveClick(i)}>Remove Workout</Button>
-                )
-              }
-            </CardBody>
-          </Card>
-        </div >
-      ))
+      {(!isLoading && workouts) &&
+        <Table isStriped aria-label="Workouts">
+          <TableHeader>
+            <TableColumn>Name</TableColumn>
+            <TableColumn>Edit</TableColumn>
+            <TableColumn>Delete</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {workouts.map((workout) => (
+              <TableRow key={workout.id}>
+                <TableCell>Workout {workout.order}</TableCell>
+                <TableCell>
+                  <ModalButton onPress={() => { onOpen(); setSelectedWorkout(workout) }} color="secondary" key={workout.id}>Edit</ModalButton>
+                </TableCell>
+                <TableCell>
+                  <Button color="danger" onClick={() => deleteWorkout(workout.id)}>Delete</Button>
+                </TableCell>
+              </TableRow>
+
+            ))}
+          </TableBody>
+        </Table>
       }
-      <Button color="secondary" onClick={handleAddClick}>Add Workout</Button>
-      <Button color="success" onClick={handleSubmit}>Save Workout</Button>
+      <Button size="lg" color="success" onClick={addWorkout}>Add workout</Button>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="center">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Workout {selectedWorkout?.order}</ModalHeader>
+              <ModalBody>
+                {(selectedWorkout?.id) && <AddSets workoutId={selectedWorkout.id} />}
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </>
   );
 }

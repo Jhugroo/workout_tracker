@@ -5,10 +5,14 @@ generator client {
     provider = "prisma-client-js"
 }
 
+// datasource db {
+//     provider  = "postgresql"
+//     url       = env("DATABASE_URL")
+//     directUrl = env("DIRECT_URL")
+// }
 datasource db {
-    provider  = "postgresql"
-    url       = env("DATABASE_URL")
-    directUrl = env("DIRECT_URL")
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
 }
 
 model Post {
@@ -33,7 +37,7 @@ model Workout {
     id     Int   @id @default(autoincrement())
     order  Int   @default(0)
     sets   Set[]
-    Week   Week? @relation(fields: [weekId], references: [id])
+    Week   Week? @relation(fields: [weekId], references: [id], onDelete: Cascade)
     weekId Int?
 }
 
@@ -41,7 +45,7 @@ model Set {
     id        Int      @id @default(autoincrement())
     name      String
     reps      String
-    Workout   Workout? @relation(fields: [workoutId], references: [id])
+    Workout   Workout? @relation(fields: [workoutId], references: [id], onDelete: Cascade)
     workoutId Int?
 }
 
@@ -52,7 +56,7 @@ model Account {
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String? @db.Text
+    refresh_token     String? //@db.Text
     access_token      String? // @db.Text
     expires_at        Int?
     token_type        String?

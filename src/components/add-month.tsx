@@ -4,9 +4,13 @@ import { useState } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button as ModalButton, useDisclosure } from "@nextui-org/react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
 import AddWorkout from "./add-workout";
+type week = {
+  id: number;
+  order: number;
+}
 export default function AddMonth() {
   const { data: weeks, refetch, isLoading } = api.workout.getWeeks.useQuery();
-  const [selectedWeek, setSelectedWeek] = useState<number>(0);
+  const [selectedWeek, setSelectedWeek] = useState<week>();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const addWeeks = api.workout.addWeek.useMutation({
     onSuccess: (week) => {
@@ -30,7 +34,7 @@ export default function AddMonth() {
       });
     }
   };
-  const deleteWeek = (id) => {
+  const deleteWeek = (id: number) => {
     removeWeek.mutate({ id: id })
   };
   return (
@@ -43,11 +47,11 @@ export default function AddMonth() {
             <TableColumn>Delete</TableColumn>
           </TableHeader>
           <TableBody>
-            {weeks.map((week) => (
+            {weeks?.map((week) => (
               <TableRow key={week.id}>
-                <TableCell>Week {week.id}</TableCell>
+                <TableCell>Week {week.order}</TableCell>
                 <TableCell>
-                  <ModalButton onPress={() => { onOpen(); setSelectedWeek(week.id) }} color="secondary" key={week.id}>Edit</ModalButton>
+                  <ModalButton onPress={() => { onOpen(); setSelectedWeek(week) }} color="secondary" key={week.id}>Edit</ModalButton>
                 </TableCell>
                 <TableCell>
                   <Button color="danger" onClick={() => deleteWeek(week.id)}>Delete</Button>
@@ -63,9 +67,9 @@ export default function AddMonth() {
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1">Week {selectedWeek?.order}</ModalHeader>
               <ModalBody>
-                <AddWorkout />
+                {selectedWeek?.id && < AddWorkout weekId={selectedWeek?.id} />}
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
